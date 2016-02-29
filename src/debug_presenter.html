@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+  <head>
+    <title>RevealRemote debug page</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      window.onload = function () {
+        var log = document.getElementById('log');
+        var socket = io('/presenter');
+        var state = {
+          progress: 0,
+          slideNotes: randomString(30)
+        };
+        socket.on('connect', function () {
+          writeToLog('Socket connected');
+        });
+        socket.on('ok', function () {
+          writeToLog('Presenter connected ok');
+        });
+        socket.on('not ok', function () {
+          writeToLog('Presenter connected not ok');
+        });
+        socket.on('state', function (data) {
+          writeToLog('State: ' + JSON.stringify(data));
+        });
+
+        document.querySelector('#change-progress').onclick = function () {
+          state.progress = Math.random();
+          state.slideNotes = randomString(30);
+          socket.emit('slide changed', state);
+        };
+
+        document.querySelector('#handshake').onclick = function () {
+          socket.emit('handshake', {
+            magic: randomString(30)
+          });
+        };
+
+        function writeToLog (text) {
+          var span = document.createElement('span');
+          span.innerHTML = '<br>' + text;
+          log.appendChild(span);
+        }
+
+        function randomString (len) {
+          var text = "";
+          var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+          for (var i = 0; i < len; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+          }
+
+          return text;
+        };
+      };
+    </script>
+  </head>
+  <body>
+    <button id="handshake">Handshake</button>
+    <button id="change-progress">Change progress to Math.random()</button>
+    <div id="log"></div>
+  </body>
+</html>

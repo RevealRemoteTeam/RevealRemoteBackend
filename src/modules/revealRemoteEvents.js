@@ -11,7 +11,8 @@ this.__defineGetter__("presenterToServer", function(){ return presenterToServerE
 // server to presenter events
 var serverToPresenterEvents = {
 	get ok() {return 'ok';},
-	get notOk() {return 'not ok';}
+	get notOk() {return 'not ok';},
+	get state() {return 'state';}
 }
 this.__defineGetter__("serverToPresenter", function(){ return serverToPresenterEvents; });
 
@@ -19,7 +20,7 @@ this.__defineGetter__("serverToPresenter", function(){ return serverToPresenterE
 // presentation to server events
 var presentationToServerEvents = {
 	get handshake() {return 'handshake';},
-	get state() {return 'state';}
+	get slideChanged() {return 'slide changed';}
 }
 this.__defineGetter__("presentationToServer", function(){ return presentationToServerEvents; });
 
