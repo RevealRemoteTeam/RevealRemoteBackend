@@ -6,9 +6,16 @@ this.__defineGetter__("magic", function(){ return /^[a-zA-Z0-9 ]{4,60}$/; });
 this.__defineGetter__("message", function(){ return /^[a-zA-Z0-9 ]{1,40}$/; });
 this.__defineGetter__("nickname", function(){ return /^[a-zA-Z0-9 ]{1,20}$/; });
 this.__defineGetter__("progress", function(){ return "number"; });
-this.__defineGetter__("slideNotes", function(){ return "string"; });
-this.__defineGetter__("validator", function() { return function (object) {
+this.__defineGetter__("slideNotes", function(){ var x = "string"; x.optional = true; return x; });
+this.__defineGetter__("validator", function() { return function (object, mandatory) {
 	var valid = true;
+	if (mandatory) {
+		if (!mandatory.every(function (field) {
+			return typeof object[field] !== 'undefined';
+		})) {
+			return;
+		}
+	}
 	for (var key in object) {
 		if (object.hasOwnProperty(key)) {
 			if (!this[key]) {
@@ -17,7 +24,7 @@ this.__defineGetter__("validator", function() { return function (object) {
 			}
 
 			if (typeof this[key] === "string") {
-				if (typeof object[key] !== this[key]) {
+				if (typeof object[key] !== this[key] && !(typeof object[key] === 'undefined' && this[key].optional)) {
 					valid = false;
 					break;
 				}

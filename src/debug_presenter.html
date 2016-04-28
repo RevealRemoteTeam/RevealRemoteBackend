@@ -24,15 +24,18 @@
           writeToLog('State: ' + JSON.stringify(data));
         });
 
-        document.querySelector('#change-progress').onclick = function () {
-          state.progress = Math.random();
-          state.slideNotes = randomString(30);
-          socket.emit('slide changed', state);
+        document.querySelector('#next').onclick = function () {
+          socket.emit('control', { action: 'next' });
+        };
+
+        document.querySelector('#prev').onclick = function () {
+          socket.emit('control', { action: 'prev' });
         };
 
         document.querySelector('#handshake').onclick = function () {
           socket.emit('handshake', {
-            magic: randomString(30)
+            magic: 'ionic presentation vaa',
+            nickname: randomString(8)
           });
         };
 
@@ -57,7 +60,8 @@
   </head>
   <body>
     <button id="handshake">Handshake</button>
-    <button id="change-progress">Change progress to Math.random()</button>
+    <button id="prev">Prev</button>
+    <button id="next">Next</button>
     <div id="log"></div>
   </body>
 </html>

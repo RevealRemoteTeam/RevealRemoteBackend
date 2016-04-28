@@ -30,12 +30,12 @@
         document.querySelector('#change-progress').onclick = function () {
           state.progress = Math.random();
           state.slideNotes = randomString(30);
-          socket.emit('slide changed', state);
+          socket.emit('state', state);
         };
 
         document.querySelector('#handshake').onclick = function () {
           socket.emit('handshake', {
-            magic: randomString(30)
+            magic: 'magic magic magic'
           });
         };
 
