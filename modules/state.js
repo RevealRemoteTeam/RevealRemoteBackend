@@ -16,18 +16,15 @@ function _getEmittableState (obj) {
 
 State.prototype = {
 	emitState: function (to) {
-		console.log('emit state');
 		to.emit('state', _getEmittableState(this));
 	},
 	emitToPresenters: function () {
 		var args = Array.prototype.slice.call(arguments, 0);
-		console.log('emit ' + args[0] + ' to presenters');
 		this.presenters.forEach(function (presenter) {
 			presenter.socket.emit.apply(presenter.socket, args);
 		});
 	},
 	emitStateToPresenters: function () {
-		console.log('emit state to presenters');
 		this.emitToPresenters('state', _getEmittableState(this));
 	},
 	getEmittableState: function () {

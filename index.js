@@ -1,30 +1,35 @@
-/**
- * TODO: check validation of state from presentation; optional slideNotes
- */
-
 const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
-const validation = require('./validation');
-const State = require('./state');
-const Client = require('./client');
-const constants = require('./const');
+const constants = require('./modules/const');
+const validation = require('./modules/validation');
+const env = require('./env');
+const State = require('./modules/state');
+const Client = require('./modules/client');
 
-app.get('/memory', function (req, res) {
-	var clientsCopy = {};
-	for (var key in clients) {
-		clientsCopy[key] = clients[key].getEmittableClient();
-	}
+if (env.environment === 'development') {
+	app.get('/memory', function (req, res) {
+		var clientsCopy = {};
+		for (var key in clients) {
+			clientsCopy[key] = clients[key].getEmittableClient();
+		}
 
-	var statesCopy = {};
-	for (var key in states) {
-		statesCopy[key] = states[key].getEmittableState();
+		var statesCopy = {};
+		for (var key in states) {
+			statesCopy[key] = states[key].getEmittableState();
+		}
+		res.type('text/plain').send(JSON.stringify({
+			clients: clientsCopy,
+			states: statesCopy
+		}, null, 4));
+	});
+}
+
+function debug () {
+	if (env.environment === 'development') {
+		console.log.apply(console, Array.prototype.slice.call(arguments, 0));
 	}
-	res.type('text/plain').send(JSON.stringify({
-		clients: clientsCopy,
-		states: statesCopy
-	}, null, 4));
-})
+};
 
 // Client householding
 const clients = {};
@@ -35,6 +40,10 @@ io.of('/presenter').on('connection', function (socket) {
 
 	socket.on('control', function (controlData) {
 		var client = clients[socket.id];
+		if (!client) {
+			return;
+		}
+
 		var state = states[client.handshake.magic];
 		if (state.presentation) {
 			state.presentation.socket.emit('control', controlData);
@@ -74,21 +83,23 @@ io.of('/presentation').on('connection', function (socket) {
 
 		state.presentationConnected = false;
 		state.presentation = null;
+		debug("disconnect from presentation: emit state to presenters");
 		state.emitStateToPresenters();
 	});
 
 	socket.on('state', function (stateData) {
-		if (!validation.validator(stateData, constants.mandatoryFieldsPresentationState)) {
-			console.log('validation error @/presentation/state', stateData);
+		var client = clients[socket.id];
+		if (!client || !validation.validator(stateData, constants.mandatoryFieldsPresentationState)) {
 			return;
 		}
 
-		var client = clients[socket.id];
 		var magic = client.handshake.magic;
 		var state = states[magic];
 
 		state.progress = stateData.progress;
 		state.slideNotes = stateData.slideNotes;
+
+		debug("state from presentation: emit state to presenters");
 		state.emitStateToPresenters();
 	});
 });
@@ -131,7 +142,6 @@ function _handleHandshake (socket, type, handshakeData) {
 		socket: socket
 	});
 
-	socket.join(handshakeData.magic);
 	socket.emit('ok');
 
 	// send state if it exists
@@ -144,8 +154,8 @@ function _handleHandshake (socket, type, handshakeData) {
 			state.presentation = clients[socket.id];
 
 			// Let all others know a presentation was connected
+			debug("handshake from presentation: emit state to presenters");
 			state.emitStateToPresenters();
-
 		}
 		else {
 			state.presenters.push(clients[socket.id]);
@@ -179,6 +189,6 @@ function _handleHandshake (socket, type, handshakeData) {
 	}
 };
 
-http.listen(8234, function () {
-	console.log("Started listening on 8234");
+http.listen(env.port, function () {
+	console.log("Started listening on port " + env.port);
 });

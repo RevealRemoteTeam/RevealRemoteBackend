@@ -1,0 +1,2 @@
+this.__defineGetter__("environment", function() { return process.env.REVEALREMOTE_ENV || "production"; /* development */ });
+this.__defineGetter__("port", function() { return process.env.REVEALREMOTE_PORT || 80; });
