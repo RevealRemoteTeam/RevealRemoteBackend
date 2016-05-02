@@ -1,0 +1,8 @@
+.revealremote-qr {
+	text-align: center;
+	height: 150px;
+}
+
+.revealremote-qr img {
+	display: inline-block !important;
+}

@@ -1,11 +1,15 @@
-const app = require('express')();
+var express = require('express');
+const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+
+const env = require('./env');
 const constants = require('./modules/const');
 const validation = require('./modules/validation');
-const env = require('./env');
 const State = require('./modules/state');
 const Client = require('./modules/client');
+
+app.use(express.static('www'));
 
 if (env.environment === 'development') {
 	app.get('/memory', function (req, res) {
@@ -44,7 +48,7 @@ io.of('/presenter').on('connection', function (socket) {
 			return;
 		}
 
-		var state = states[client.handshake.magic];
+		var state = states[client.roomId];
 		if (state.presentation) {
 			state.presentation.socket.emit('control', controlData);
 		}
@@ -61,7 +65,7 @@ io.of('/presenter').on('connection', function (socket) {
 		client.state.presenters.splice(client.state.presenters.indexOf(client), 1);
 
 		if (client.state.presenters.length === 0 && !client.state.presentationConnected) {
-			delete states[client.handshake.magic];
+			delete states[client.roomId];
 		}
 	});
 });
@@ -78,8 +82,7 @@ io.of('/presentation').on('connection', function (socket) {
 
 		delete clients[socket.id];
 
-		var magic = client.handshake.magic;
-		var state = states[magic];
+		var state = states[client.roomId];
 
 		state.presentationConnected = false;
 		state.presentation = null;
@@ -92,9 +95,7 @@ io.of('/presentation').on('connection', function (socket) {
 		if (!client || !validation.validator(stateData, constants.mandatoryFieldsPresentationState)) {
 			return;
 		}
-
-		var magic = client.handshake.magic;
-		var state = states[magic];
+		var state = states[client.roomId];
 
 		state.progress = stateData.progress;
 		state.slideNotes = stateData.slideNotes;
@@ -112,19 +113,9 @@ function _handleHandshake (socket, type, handshakeData) {
 	}
 
 	if (type === 'presentation') {
-		// no duplicate magic string allowed
-		if (states[handshakeData.magic] && states[handshakeData.magic].presentationConnected) {
+		// no duplicate roomId allowed
+		if (states[handshakeData.roomId] && states[handshakeData.roomId].presentationConnected) {
 			error = 'duplicate';
-		}
-	}
-	else if (type === 'presenter') {
-		// no duplicate nicknames within room possible
-		if (states[handshakeData.magic]) {
-			if (states[handshakeData.magic].presenters.some(function (presenter) {
-				return presenter.handshake.nickname === handshakeData.nickname;
-			})) {
-				error = 'duplicate';
-			}
 		}
 	}
 
@@ -138,15 +129,15 @@ function _handleHandshake (socket, type, handshakeData) {
 	}
 
 	clients[socket.id] = new Client({
-		handshake: handshakeData,
+		roomId: handshakeData.roomId,
 		socket: socket
 	});
 
 	socket.emit('ok');
 
 	// send state if it exists
-	if (states[handshakeData.magic]) {
-		var state = states[handshakeData.magic];
+	if (states[handshakeData.roomId]) {
+		var state = states[handshakeData.roomId];
 		clients[socket.id].state = state;
 
 		if (type === 'presentation') {
@@ -159,6 +150,9 @@ function _handleHandshake (socket, type, handshakeData) {
 		}
 		else {
 			state.presenters.push(clients[socket.id]);
+			if (state.presentation) {
+				state.presentation.socket.emit('presenter connected');
+			}
 		}
 
 		// Get the client a copy of the state if it's a presenter
@@ -167,7 +161,7 @@ function _handleHandshake (socket, type, handshakeData) {
 		}
 	}
 	else {
-		// Create a new state with the magic string
+		// Create a new state with the roomId
 		var state = new State({
 			progress: null,
 			slideNotes: null,
@@ -178,7 +172,7 @@ function _handleHandshake (socket, type, handshakeData) {
 
 		clients[socket.id].state = state;
 
-		states[handshakeData.magic] = state;
+		states[handshakeData.roomId] = state;
 
 		// Get the client a copy of the state if it's a presenter
 		if (type === 'presenter') {

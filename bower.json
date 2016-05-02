@@ -1,0 +1,23 @@
+{
+  "name": "revealremotebackend",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Tobias <tobias@tobiass.nl>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/RevealRemoteTeam/RevealRemoteBackend",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "qrcode.js": "qrcode-js#*",
+    "sweetalert": "^1.1.3",
+    "node-uuid": "^1.4.7"
+  }
+}

@@ -9,9 +9,7 @@ function Client(obj) {
 Client.prototype = {
 	getEmittableClient: function () {
 		return {
-			handshake: this.handshake,
-			type: this.type,
-			uuid: this.uuid
+			roomId: this.roomId
 		};
 	}
 };

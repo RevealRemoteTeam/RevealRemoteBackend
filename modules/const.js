@@ -1,3 +1,3 @@
-this.__defineGetter__("mandatoryFieldsPresentationHandshake", function() { return ["magic"]; });
-this.__defineGetter__("mandatoryFieldsPresenterHandshake", function() { return ["magic", "nickname"]; });
+this.__defineGetter__("mandatoryFieldsPresentationHandshake", function() { return ["roomId"]; });
+this.__defineGetter__("mandatoryFieldsPresenterHandshake", function() { return ["roomId"]; });
 this.__defineGetter__("mandatoryFieldsPresentationState", function() { return ["progress"]; });
